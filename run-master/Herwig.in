@@ -1,0 +1,168 @@
+# -*- ThePEG-repository -*-
+
+##################################################
+## Collider type
+##################################################
+
+read snippets/PPCollider.in
+
+# load LeptoQuark Model
+#read Leptoquark.model
+read FRModel.model
+
+# alternatively, define intermediate particles
+# create /ThePEG/ParticleData S0bar
+# setup S0bar 9911561 S0bar 400.0 0.0 0.0 0.0 -1 3 1 0
+# create /ThePEG/ParticleData S0
+# setup S0 -9911561 S0 400.0 0.0 0.0 0.0 1 -3 1 0
+# makeanti S0bar S0
+
+
+##################################################
+## Process selection
+##################################################
+
+# loading "LesHouches.so" library 
+library LesHouches.so
+library powhegHerwig.so
+# inserting the lhe file
+cd /Herwig/EventHandlers
+create ThePEG::powhegLesHouchesFileReader myReader
+set myReader:FileName pwgevents-0001.lhe.gz
+set myReader:AllowedToReOpen No
+create ThePEG::Cuts /Herwig/Cuts/NoCuts 
+set myReader:Cuts /Herwig/Cuts/NoCuts
+set myReader:CacheFileName cache.tmp
+set myReader:MaxScan 5
+
+create ThePEG::LesHouchesEventHandler myLesHouchesHandler
+set myLesHouchesHandler:CascadeHandler /Herwig/Shower/ShowerHandler
+set myLesHouchesHandler:HadronizationHandler /Herwig/Hadronization/ClusterHadHandler
+set myLesHouchesHandler:DecayHandler /Herwig/Decays/DecayHandler
+
+insert myLesHouchesHandler:LesHouchesReaders 0 myReader
+set myLesHouchesHandler:PartonExtractor /Herwig/Partons/PPExtractor
+set myLesHouchesHandler:WeightOption VarNegWeight
+set myReader:WeightWarnings false
+
+##################################################
+# PDFs
+##################################################
+
+set myReader:InitPDFs 0
+set myReader:MomentumTreatment RescaleEnergy # momentum conservation
+
+cd /Herwig/Partons
+create ThePEG::LHAPDF myPDFset ThePEGLHAPDF.so
+set myPDFset:PDFName LUXlep-NNPDF31_nlo_as_0118_luxqed
+set /Herwig/Partons/RemnantDecayer:AllowTop Yes
+set /Herwig/Partons/RemnantDecayer:AllowLeptons Yes
+set myPDFset:RemnantHandler HadronRemnants
+set /Herwig/Particles/p+:PDF myPDFset
+set /Herwig/Particles/pbar-:PDF myPDFset
+set /Herwig/Partons/PPExtractor:FirstPDF  myPDFset
+set /Herwig/Partons/PPExtractor:SecondPDF myPDFset
+
+set /Herwig/Shower/ShowerHandler:PDFA myPDFset
+set /Herwig/Shower/ShowerHandler:PDFB myPDFset
+set /Herwig/Shower/ShowerHandler:PDFARemnant myPDFset
+set /Herwig/Shower/ShowerHandler:PDFBRemnant myPDFset
+
+set /Herwig/Particles/e-:PDF /Herwig/Partons/NoPDF
+set /Herwig/Particles/e+:PDF /Herwig/Partons/NoPDF
+
+set /Herwig/EventHandlers/myReader:PDFA myPDFset
+set /Herwig/EventHandlers/myReader:PDFB myPDFset
+
+# Turn off tau decay to pions:
+#set /Herwig/Particles/tau+/tau+->pi+,pi0,nu_taubar;:OnOff Off
+#set /Herwig/Particles/tau-/tau-->pi-,pi0,nu_tau;:OnOff Off
+#do /Herwig/Particles/tau+:SelectDecayModes tau+->nu_taubar,nu_e,e+;
+#set /Herwig/Particles/tau+/tau+->nu_taubar,nu_mu,mu+;:OnOff On
+#do /Herwig/Particles/tau-:SelectDecayModes tau-->nu_tau,nu_ebar,e-;
+#set /Herwig/Particles/tau-/tau-->nu_tau,nu_mubar,mu-;:OnOff On
+# Uncomment the following two lines to set the tau lepton to stable.
+#set /Herwig/Particles/tau+:Stable Stable
+#set /Herwig/Particles/tau-:Stable Stable
+##################################################
+# Technical parameters for this run
+##################################################
+
+cd /Herwig/Generators
+set EventGenerator:NumberOfEvents 240000
+set EventGenerator:RandomNumberGenerator:Seed 31122001
+# set EventGenerator:PrintEvent 10000
+set EventGenerator:MaxErrors 24000
+
+##################################################
+# physics parameters
+##################################################
+
+cd /Herwig/Generators
+set EventGenerator:EventHandler:LuminosityFunction:Energy 6500.*GeV
+set EventGenerator:EventHandler:CascadeHandler:MPIHandler NULL
+set /Herwig/Shower/ShowerHandler:HardEmission 0
+#set /Herwig/Shower/PartnerFinder:QEDPartner IIandFF
+
+
+###################################
+# shower parameters
+####################################
+# normally, especially for POWHEG, you want
+# the scale supplied in the event files (SCALUP)
+# to be used as a pT veto scale in the parton shower
+set /Herwig/Shower/ShowerHandler:MaxPtIsMuF Yes
+set /Herwig/Shower/ShowerHandler:RestrictPhasespace Yes
+# Shower parameters
+# treatment of wide angle radiation
+set /Herwig/Shower/PartnerFinder:PartnerMethod Random
+set /Herwig/Shower/PartnerFinder:ScaleChoice Partner
+
+
+##################################################
+## Handlers
+##################################################
+
+cd /Herwig/Generators
+set EventGenerator:EventHandler /Herwig/EventHandlers/myLesHouchesHandler
+# set EventGenerator:EventHandler:CascadeHandler NULL
+# set EventGenerator:EventHandler:HadronizationHandler NULL
+# set EventGenerator:EventHandler:DecayHandler NULL
+# set /Herwig/Analysis/Basics:CheckQuark 0
+set /Herwig/Shower/ShowerHandler:Interactions QCDandQED #options: QCD, QED and QCDandQED
+# set /Herwig/Particles/W-:Stable Stable
+# set /Herwig/Particles/W+:Stable Stable
+# set /Herwig/Particles/Z0:Stable Stable
+
+set /Herwig/Particles/h0:Stable Stable
+set EventGenerator:EventHandler:StatLevel Full
+
+##################################################
+## Analyses
+##################################################
+
+cd /Herwig/Generators
+
+#create ThePEG::RivetAnalysis /Herwig/Analysis/Rivet RivetAnalysis.so
+#insert EventGenerator:AnalysisHandlers 0 /Herwig/Analysis/Rivet
+
+#insert  /Herwig/Analysis/Rivet:Analyses 0 MC_HJETSVBF
+#create ThePEG::HepMCFile /Herwig/Analysis/HepMC HepMCAnalysis.so
+#set /Herwig/Analysis/HepMC:PrintEvent 25000
+#set /Herwig/Analysis/HepMC:Units GeV_mm
+#insert /Herwig/Generators/EventGenerator:AnalysisHandlers 0 /Herwig/Analysis/HepMC
+
+create ThePEG::powhegAnalysis powhegAnalysis powhegHerwig.so
+insert EventGenerator:AnalysisHandlers 1 powhegAnalysis
+set powhegAnalysis:Units GeV_mm
+set powhegAnalysis:RunNumber 0001
+
+
+cd /Herwig/Analysis
+set Basics:CheckQuark No
+
+##################################################
+## Save the generator
+##################################################
+cd /Herwig/Generators
+saverun Herwig-0001 EventGenerator

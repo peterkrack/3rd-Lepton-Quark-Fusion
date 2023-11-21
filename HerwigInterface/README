@@ -1,0 +1,37 @@
+Herwig + POWHEG analysis interface for lepton initiated processes
+The following should work on a linux system
+(this has been tested on a MacOs system and, so far, it does not work) 
+
+0) If it is not in your standard LHAPDF installation, you should install the LeptonPDF (LUXlep-NNPDF31_nlo_as_0118_luxqed). 
+
+
+Read carefully the Herwig.in infile. You should be able to adapt it to your needs. The essential sections are
+- PDFs:
+set /Herwig/Partons/RemnantDecayer:AllowLeptons Yes
+set /Herwig/Particles/e-:PDF /Herwig/Partons/NoPDF
+set /Herwig/Particles/e+:PDF /Herwig/Partons/NoPDF
+
+In particular you may want a different analysis section.
+Our setup is such that we can use our powheg analysis. We do it as follows:
+
+1) Compile the POWHEG-Herwig interface by Silvia and Tomas
+- Modify the available Makefile in the obvious way ( update paths for the  BOX folder, the process folder and the
+analysis source and add customary dependeces if required, check the paths to ThePeg, Herwig and HepMC)
+- compile
+$ make
+
+- This generates the dynamic library powhegHerwig.so
+
+2) Run Shower+Analysis 
+- Create a folder (lets say testrun) with the powheginput file and the lhe events. The dynamic library powhegHerwig.so
+must be in ../testrun
+- Copy into the folder the new Herwig.in  template and
+the hw7.sh shell script (modified version  under herwig-mod directory).
+- Modify the number of events to be generated in the Herwig.in file
+set EventGenerator:NumberOfEvents 20000 -> set EventGenerator:NumberOfEvents XXX
+and check the name of PDF. 
+
+- To run
+$ ./hw7.sh
+from testrun directory
+
