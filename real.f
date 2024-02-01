@@ -150,8 +150,6 @@ c amplitude for the process.
          qlq = qq -ql
          amp2real = -8d0*pi**2 *g4**2*(ql*s+qq*t)**2 
      1              *(s**2+t**2 +2d0*u*mU2)/(s*t*(s+t)**2)
-         amp2real = -8d0*pi**2 *g4**2*(ql*s+qq*t)**2 
-     1              *((s+t)**2 +2d0*u*mU2)/(s*t*(s+t)**2)
          amp2real = amp2real * em_alpha /st_alpha
       endif
 
